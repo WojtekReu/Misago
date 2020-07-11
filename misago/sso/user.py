@@ -18,6 +18,8 @@ def get_or_create_user(request, user_data):
             is_active=user_data.get("is_active", True),
             sso_id=user_data["id"],
         )
+        if is_more_user_data(user_data):
+            update_profile_fields(user, user_data)
         user.update_acl_key()
         setup_new_user(request.settings, user)
         return user
@@ -41,3 +43,24 @@ def update_user(user, user_data):
     if user.is_active != user_data.get("is_active", user.is_active):
         user.is_active = user_data["is_active"]
     user.save()
+
+
+def is_more_user_data(user_data):
+    return any(
+        (
+            'real_name' in user_data,
+            'gender' in user_data,
+            'location' in user_data,
+        )
+    )
+
+
+def update_profile_fields(user, user_data):
+    if "real_name" in user_data:
+        user.profile_fields['real_name'] = user_data['real_name']
+    if "gender" in user_data:
+        user.profile_fields['gender'] = user_data['gender']
+    if "location" in user_data:
+        user.profile_fields['location'] = user_data['location']
+
+    user.save(update_fields=["profile_fields"])
